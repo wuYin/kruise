@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
+// 最终实现 CloneSet 资源的 CREATE, UPDATE 操作验证
 // CloneSetCreateUpdateHandler handles CloneSet
 type CloneSetCreateUpdateHandler struct {
 	Client client.Client

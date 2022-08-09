@@ -98,6 +98,7 @@ type InPlaceUpdateContainerStatus struct {
 type InPlaceUpdateStrategy struct {
 	// GracePeriodSeconds is the timespan between set Pod status to not-ready and update images in Pod spec
 	// when in-place update a Pod.
+	// not-ready --GracePeriodSeconds--> update image
 	GracePeriodSeconds int32 `json:"gracePeriodSeconds,omitempty"`
 }
 

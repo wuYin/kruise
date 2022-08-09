@@ -40,7 +40,7 @@ type GateFunc func() (enabled bool)
 var (
 	// HandlerMap contains all admission webhook handlers.
 	HandlerMap   = map[string]admission.Handler{}
-	handlerGates = map[string]GateFunc{}
+	handlerGates = map[string]GateFunc{} // 是否启用各 path feature
 )
 
 func addHandlers(m map[string]admission.Handler) {

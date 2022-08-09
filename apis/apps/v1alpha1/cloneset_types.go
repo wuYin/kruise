@@ -36,6 +36,9 @@ const (
 	CloneSetScalingExcludePreparingDeleteKey = "apps.kruise.io/cloneset-scaling-exclude-preparing-delete"
 )
 
+//
+// 1. Spec
+//
 // CloneSetSpec defines the desired state of CloneSet
 type CloneSetSpec struct {
 	// Replicas is the desired number of replicas of the given Template.
@@ -72,11 +75,13 @@ type CloneSetSpec struct {
 	// be maintained in the CloneSet's revision history. The revision history
 	// consists of all revisions not represented by a currently applied
 	// CloneSetSpec version. The default value is 10.
+	// 非当前版本的 revision 数量上限
 	RevisionHistoryLimit *int32 `json:"revisionHistoryLimit,omitempty"`
 
 	// Minimum number of seconds for which a newly created pod should be ready
 	// without any of its container crashing, for it to be considered available.
 	// Defaults to 0 (pod will be considered available as soon as it is ready)
+	// ready 持续最低秒数
 	MinReadySeconds int32 `json:"minReadySeconds,omitempty"`
 
 	// Lifecycle defines the lifecycle hooks for Pods pre-delete, in-place update.
@@ -84,6 +89,7 @@ type CloneSetSpec struct {
 }
 
 // CloneSetScaleStrategy defines strategies for pods scale.
+// 1.1 扩缩容增删策略
 type CloneSetScaleStrategy struct {
 	// PodsToDelete is the names of Pod should be deleted.
 	// Note that this list will be truncated for non-existing pod names.
@@ -92,10 +98,12 @@ type CloneSetScaleStrategy struct {
 	// This field can control the changes rate of replicas for CloneSet so as to minimize the impact for users' service.
 	// The scale will fail if the number of unavailable pods were greater than this MaxUnavailable at scaling up.
 	// MaxUnavailable works only when scaling up.
+	// 扩容时不可用 pod 数量上限
 	MaxUnavailable *intstr.IntOrString `json:"maxUnavailable,omitempty"`
 }
 
 // CloneSetUpdateStrategy defines strategies for pods update.
+// 1.2 升级策略
 type CloneSetUpdateStrategy struct {
 	// Type indicates the type of the CloneSetUpdateStrategy.
 	// Default is ReCreate.
@@ -105,6 +113,7 @@ type CloneSetUpdateStrategy struct {
 	// Absolute number is calculated from percentage by rounding up by default.
 	// It means when partition is set during pods updating, (replicas - partition value) number of pods will be updated.
 	// Default value is 0.
+	// 需保留的旧版本数
 	Partition *intstr.IntOrString `json:"partition,omitempty"`
 	// The maximum number of pods that can be unavailable during update or scale.
 	// Value can be an absolute number (ex: 5) or a percentage of desired pods (ex: 10%).
@@ -122,11 +131,13 @@ type CloneSetUpdateStrategy struct {
 	Paused bool `json:"paused,omitempty"`
 	// Priorities are the rules for calculating the priority of updating pods.
 	// Each pod to be updated, will pass through these terms and get a sum of weights.
+	// 计算 pod 的升级权重
 	PriorityStrategy *appspub.UpdatePriorityStrategy `json:"priorityStrategy,omitempty"`
 	// ScatterStrategy defines the scatter rules to make pods been scattered when update.
 	// This will avoid pods with the same key-value to be updated in one batch.
 	// - Note that pods will be scattered after priority sort. So, although priority strategy and scatter strategy can be applied together, we suggest to use either one of them.
 	// - If scatterStrategy is used, we suggest to just use one term. Otherwise, the update order can be hard to understand.
+	// priority 先分类，scatter 再打散，避免相同 kv 的 pod 同一批升级
 	ScatterStrategy UpdateScatterStrategy `json:"scatterStrategy,omitempty"`
 	// InPlaceUpdateStrategy contains strategies for in-place update.
 	InPlaceUpdateStrategy *appspub.InPlaceUpdateStrategy `json:"inPlaceUpdateStrategy,omitempty"`
@@ -142,6 +153,7 @@ const (
 	// InPlaceIfPossibleCloneSetUpdateStrategyType indicates that we try to in-place update Pod instead of
 	// recreating Pod when possible. Currently, only image update of pod spec is allowed. Any other changes to the pod
 	// spec will fall back to ReCreate CloneSetUpdateStrategyType where pod will be recreated.
+	// 仅支持更新 spec/iamge 原地重启
 	InPlaceIfPossibleCloneSetUpdateStrategyType CloneSetUpdateStrategyType = "InPlaceIfPossible"
 	// InPlaceOnlyCloneSetUpdateStrategyType indicates that we will in-place update Pod instead of
 	// recreating pod. Currently we only allow image update for pod spec. Any other changes to the pod spec will be
@@ -149,7 +161,12 @@ const (
 	InPlaceOnlyCloneSetUpdateStrategyType CloneSetUpdateStrategyType = "InPlaceOnly"
 )
 
+//
+// 2. Status
+//
 // CloneSetStatus defines the observed state of CloneSet
+// Available = Ready + minReadySeconds
+// ExpectedUpdated = Replicas - Partition
 type CloneSetStatus struct {
 	// ObservedGeneration is the most recent generation observed for this CloneSet. It corresponds to the
 	// CloneSet's generation, which is updated on mutation by the API Server.
